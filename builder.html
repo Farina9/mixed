@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>استودیو مدیریت محتوای واقعیت افزوده (WebAR Builder)</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #131b2e;
+      --card-border: #1e293b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --accent: #38bdf8;
+      --success: #16a34a;
+      --danger: #ef4444;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Tahoma, sans-serif; }
+    body { background: var(--bg); color: var(--text); margin: 0; padding: 24px 16px; }
+    .container { max-width: 900px; margin: 0 auto; }
+
+    header { margin-bottom: 24px; border-bottom: 1px solid var(--card-border); padding-bottom: 16px; }
+    h1 { font-size: 22px; margin: 0 0 8px 0; color: var(--accent); }
+    p.subtitle { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    .banner {
+      background: #1e293b; border-right: 4px solid var(--accent);
+      padding: 12px 16px; border-radius: 6px; font-size: 13px; margin: 16px 0; color: #cbd5e1;
+    }
+
+    .target-card {
+      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px;
+      padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      position: relative;
+    }
+    .card-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px; border-bottom: 1px solid var(--card-border); padding-bottom: 12px;
+    }
+    .card-header .title { font-size: 15px; font-weight: bold; color: #fff; }
+
+    .drop-zone {
+      border: 2px dashed #334155; border-radius: 8px; padding: 20px;
+      text-align: center; background: #070b14; cursor: pointer; transition: 0.2s;
+      margin-bottom: 16px;
+    }
+    .drop-zone:hover, .drop-zone.dragover { border-color: var(--accent); background: #0f172a; }
+    .drop-zone p { margin: 0; font-size: 13px; color: var(--muted); }
+    .drop-zone .file-name { margin-top: 6px; font-weight: bold; color: var(--accent); font-size: 14px; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 12px; }
+    .form-group { display: flex; flex-direction: column; }
+    label { font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+    input, select {
+      background: #070b14; border: 1px solid #334155; color: #fff;
+      padding: 9px 12px; border-radius: 6px; font-size: 13px; outline: none; transition: 0.15s;
+    }
+    input:focus, select:focus { border-color: var(--accent); }
+
+    .type-box {
+      background: #080d1a; border: 1px solid #1e293b; border-radius: 8px;
+      padding: 14px; margin-bottom: 14px; display: none;
+    }
+
+    .btn {
+      background: var(--primary); color: #fff; border: none; padding: 10px 18px;
+      border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s;
+      display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+    }
+    .btn:hover { background: var(--primary-hover); }
+    .btn-outline { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+    .btn-outline:hover { background: var(--accent); color: #000; }
+    .btn-success { background: var(--success); }
+    .btn-success:hover { background: #15803d; }
+    .btn-danger { background: var(--danger); font-size: 12px; padding: 6px 12px; }
+    .btn-danger:hover { background: #dc2626; }
+
+    .actions-bar {
+      display: flex; gap: 12px; justify-content: space-between; flex-wrap: wrap;
+      margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--card-border);
+    }
+    .actions-group { display: flex; gap: 12px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>استودیو مدیریت محتوای واقعیت افزوده (WebAR Builder)</h1>
+    <p class="subtitle">تنظیمات هر تارگت (ویدیو، مدل سه‌بعدی، تصویر، صوت و دکمه) را مشخص کرده و در پایان فایل استاندارد <code>config.json</code> را ذخیره کنید.</p>
+    <div class="banner">
+      💡 <strong>نکته کاربردی:</strong> رها کردن فایل‌ها در باکس زیر نام و نوع فایل را به‌طور خودکار شناسایی می‌کند. برای بارگذاری نهایی در وب‌سایت، فایل‌های رسانه‌ای را در پوشه <code>assets/</code> قرار دهید.
+    </div>
+  </header>
+
+  <div id="cards-container"></div>
+
+  <div class="actions-bar">
+    <button class="btn btn-outline" onclick="addNewCard()">➕ افزودن تارگت جدید</button>
+    <div class="actions-group">
+      <input type="file" id="import-json-input" accept=".json" style="display:none" onchange="importJSON(event)">
+      <button class="btn btn-outline" onclick="document.getElementById('import-json-input').click()">📂 فراخوانی config.json موجود</button>
+      <button class="btn btn-success" onclick="exportJSON()">💾 دانلود config.json نهایی</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let cardCounter = 0;
+
+  function addNewCard(data = null) {
+    const id = cardCounter++;
+    const container = document.getElementById('cards-container');
+
+    const card = document.createElement('div');
+    card.className = 'target-card';
+    card.id = `card-${id}`;
+
+    card.innerHTML = `
+      <div class="card-header">
+        <span class="title">تارگت شماره <span class="display-idx">0</span> (Target Index: <span class="display-idx">0</span>)</span>
+        <button class="btn btn-danger" onclick="removeCard(${id})">حذف تارگت</button>
+      </div>
+
+      <div class="drop-zone" id="drop-${id}" onclick="document.getElementById('file-input-${id}').click()">
+        <p>فایل مورد نظر (GLB, MP4, MP3, PNG, JPG) را اینجا رها کنید یا کلیک کنید</p>
+        <div class="file-name" id="filename-label-${id}">هنوز فایلی انتخاب نشده</div>
+        <input type="file" id="file-input-${id}" style="display:none" onchange="handleFileSelected(${id}, this.files[0])">
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label>نوع محتوا (Type):</label>
+          <select id="type-${id}" onchange="onTypeChange(${id})">
+            <option value="video">ویدئو (Video MP4)</option>
+            <option value="model">مدل سه‌بعدی (3D Model GLB/GLTF)</option>
+            <option value="image">تصویر (Image PNG/JPG)</option>
+            <option value="audio">پخش صوت (Audio MP3)</option>
+            <option value="link">دکمه لینک وب (Link Button)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>مسیر فایل (src):</label>
+          <input type="text" id="src-${id}" placeholder="assets/sample.mp4">
+        </div>
+      </div>
+
+      <!-- تنظیمات اختصاصی مدل سه‌بعدی -->
+      <div class="type-box" id="box-model-${id}">
+        <div class="grid-2">
+          <div class="form-group">
+            <label>حالت چرخش مدل (rotationMode):</label>
+            <select id="rot-mode-${id}">
+              <option value="none">بدون چرخش (ثابت)</option>
+              <option value="auto">چرخش خودکار (Auto-Rotate)</option>
+              <option value="manual">چرخش دستی با لمس صفحه (Manual Touch)</option>
+              <option value="both">هم چرخش خودکار + هم لمس دستی</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>سرعت چرخش خودکار (autoSpeed):</label>
+            <input type="number" id="rot-speed-${id}" value="1" step="0.2">
+          </div>
+        </div>
+      </div>
+
+      <!-- تنظیمات اختصاصی تصویر و ویدیو (ابعاد) -->
+      <div class="type-box" id="box-dimensions-${id}">
+        <div class="grid-2">
+          <div class="form-group">
+            <label>عرض پلین (width):</label>
+            <input type="number" id="dim-w-${id}" value="1" step="0.1">
+          </div>
+          <div class="form-group">
+            <label>ارتفاع پلین (height):</label>
+            <input type="number" id="dim-h-${id}" value="0.5625" step="0.05">
+          </div>
+        </div>
+      </div>
+
+      <!-- تنظیمات اختصاصی صوت -->
+      <div class="type-box" id="box-audio-${id}">
+        <div class="grid-2">
+          <div class="form-group">
+            <label>عنوان کارت صوتی:</label>
+            <input type="text" id="audio-title-${id}" value="🔊 پخش صوت">
+          </div>
+          <div class="form-group">
+            <label>رنگ زمینه کارت صوت:</label>
+            <input type="text" id="audio-color-${id}" value="#16a34a">
+          </div>
+        </div>
+      </div>
+
+      <!-- تنظیمات اختصاصی دکمه لینک -->
+      <div class="type-box" id="box-link-${id}">
+        <div class="grid-2">
+          <div class="form-group">
+            <label>متن روی دکمه:</label>
+            <input type="text" id="link-title-${id}" value="مشاهده وب‌سایت">
+          </div>
+          <div class="form-group">
+            <label>آدرس اینترنتی مقصد (URL):</label>
+            <input type="url" id="link-url-${id}" placeholder="https://example.com">
+          </div>
+        </div>
+      </div>
+
+      <!-- تنظیمات ترنسفورم عمومی -->
+      <div class="grid-3">
+        <div class="form-group">
+          <label>موقعیت (Position X Y Z):</label>
+          <input type="text" id="pos-${id}" value="0 0 0">
+        </div>
+        <div class="form-group">
+          <label>مقیاس (Scale X Y Z):</label>
+          <input type="text" id="scale-${id}" value="1 1 1">
+        </div>
+        <div class="form-group">
+          <label>لینک کلیک روی تارگت (اختیاری):</label>
+          <input type="url" id="global-link-${id}" placeholder="https://...">
+        </div>
+      </div>
+    `;
+
+    container.appendChild(card);
+    setupDropArea(id);
+
+    if (data) {
+      populateCardData(id, data);
+    } else {
+      onTypeChange(id);
+    }
+    reindexCards();
+  }
+
+  function setupDropArea(id) {
+    const drop = document.getElementById(`drop-${id}`);
+    ['dragenter', 'dragover'].forEach(ev => {
+      drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('dragover'); });
+    });
+    ['dragleave', 'drop'].forEach(ev => {
+      drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('dragover'); });
+    });
+    drop.addEventListener('drop', (e) => {
+      e.preventDefault();
+      drop.classList.remove('dragover');
+      if (e.dataTransfer.files && e.dataTransfer.files.length) {
+        handleFileSelected(id, e.dataTransfer.files[0]);
+      }
+    });
+  }
+
+  function handleFileSelected(id, file) {
+    if (!file) return;
+    const name = file.name;
+    document.getElementById(`filename-label-${id}`).innerText = name;
+    document.getElementById(`src-${id}`).value = `assets/${name}`;
+
+    const ext = name.split('.').pop().toLowerCase();
+    const typeSelect = document.getElementById(`type-${id}`);
+
+    if (['glb', 'gltf'].includes(ext)) {
+      typeSelect.value = 'model';
+      document.getElementById(`scale-${id}`).value = '0.3 0.3 0.3';
+    } else if (['mp3', 'wav', 'ogg', 'aac'].includes(ext)) {
+      typeSelect.value = 'audio';
+    } else if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
+      typeSelect.value = 'image';
+      document.getElementById(`dim-w-${id}`).value = '1';
+      document.getElementById(`dim-h-${id}`).value = '0.75';
+    } else {
+      typeSelect.value = 'video';
+      document.getElementById(`dim-w-${id}`).value = '1';
+      document.getElementById(`dim-h-${id}`).value = '0.5625';
+    }
+    onTypeChange(id);
+  }
+
+  function onTypeChange(id) {
+    const type = document.getElementById(`type-${id}`).value;
+
+    document.getElementById(`box-model-${id}`).style.display = (type === 'model') ? 'block' : 'none';
+    document.getElementById(`box-dimensions-${id}`).style.display = (type === 'video' || type === 'image') ? 'block' : 'none';
+    document.getElementById(`box-audio-${id}`).style.display = (type === 'audio') ? 'block' : 'none';
+    document.getElementById(`box-link-${id}`).style.display = (type === 'link') ? 'block' : 'none';
+    document.getElementById(`drop-${id}`).style.display = (type === 'link') ? 'none' : 'block';
+
+    const scaleInput = document.getElementById(`scale-${id}`);
+    if (type === 'model' && scaleInput.value === '1 1 1') {
+      scaleInput.value = '0.3 0.3 0.3';
+    }
+  }
+
+  function removeCard(id) {
+    const el = document.getElementById(`card-${id}`);
+    if (el) el.remove();
+    reindexCards();
+  }
+
+  function reindexCards() {
+    const cards = document.querySelectorAll('.target-card');
+    cards.forEach((card, index) => {
+      card.querySelectorAll('.display-idx').forEach(span => {
+        span.innerText = index;
+      });
+    });
+  }
+
+  function exportJSON() {
+    const cards = document.querySelectorAll('.target-card');
+    const result = {
+      version: 1,
+      generatedAt: new Date().toISOString(),
+      targets: []
+    };
+
+    cards.forEach((card, seqIndex) => {
+      const id = card.id.replace('card-', '');
+      const type = document.getElementById(`type-${id}`).value;
+      const src = document.getElementById(`src-${id}`).value.trim();
+      const pos = document.getElementById(`pos-${id}`).value.trim() || '0 0 0';
+      const scale = document.getElementById(`scale-${id}`).value.trim() || (type === 'model' ? '0.3 0.3 0.3' : '1 1 1');
+      const globalLink = document.getElementById(`global-link-${id}`).value.trim();
+
+      const item = {
+        index: seqIndex,
+        type: type,
+        src: src || `assets/target-${seqIndex}`,
+        position: pos,
+        scale: scale
+      };
+
+      if (globalLink) item.link = globalLink;
+
+      if (type === 'model') {
+        item.rotationMode = document.getElementById(`rot-mode-${id}`).value;
+        item.autoSpeed = parseFloat(document.getElementById(`rot-speed-${id}`).value) || 1;
+      } else if (type === 'video' || type === 'image') {
+        item.width = parseFloat(document.getElementById(`dim-w-${id}`).value) || 1;
+        item.height = parseFloat(document.getElementById(`dim-h-${id}`).value) || (type === 'video' ? 0.5625 : 0.75);
+      } else if (type === 'audio') {
+        item.title = document.getElementById(`audio-title-${id}`).value.trim() || '🔊 پخش صوت';
+        item.color = document.getElementById(`audio-color-${id}`).value.trim() || '#16a34a';
+      } else if (type === 'link') {
+        item.linkTitle = document.getElementById(`link-title-${id}`).value.trim() || 'مشاهده وب‌سایت';
+        item.linkUrl = document.getElementById(`link-url-${id}`).value.trim() || 'https://';
+      }
+
+      result.targets.push(item);
+    });
+
+    const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'config.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function populateCardData(id, data) {
+    document.getElementById(`type-${id}`).value = data.type || 'video';
+    document.getElementById(`src-${id}`).value = data.src || '';
+    document.getElementById(`pos-${id}`).value = data.position || '0 0 0';
+    document.getElementById(`scale-${id}`).value = data.scale || '1 1 1';
+    if (data.link) document.getElementById(`global-link-${id}`).value = data.link;
+
+    if (data.type === 'model') {
+      document.getElementById(`rot-mode-${id}`).value = data.rotationMode || 'none';
+      document.getElementById(`rot-speed-${id}`).value = data.autoSpeed || 1;
+    } else if (data.type === 'video' || data.type === 'image') {
+      if (data.width) document.getElementById(`dim-w-${id}`).value = data.width;
+      if (data.height) document.getElementById(`dim-h-${id}`).value = data.height;
+    } else if (data.type === 'audio') {
+      if (data.title) document.getElementById(`audio-title-${id}`).value = data.title;
+      if (data.color) document.getElementById(`audio-color-${id}`).value = data.color;
+    } else if (data.type === 'link') {
+      document.getElementById(`link-title-${id}`).value = data.linkTitle || '';
+      document.getElementById(`link-url-${id}`).value = data.linkUrl || '';
+    }
+    onTypeChange(id);
+  }
+
+  function importJSON(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const json = JSON.parse(evt.target.result);
+        if (json.targets && Array.isArray(json.targets)) {
+          document.getElementById('cards-container').innerHTML = '';
+          cardCounter = 0;
+          json.targets.forEach(t => addNewCard(t));
+        } else {
+          alert('قالب فایل config.json معتبر نیست.');
+        }
+      } catch (err) {
+        alert('خطا در خواندن فایل: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // ایجاد ۲ کارت پیش‌فرض جهت نمونه
+  addNewCard({ type: 'video', src: 'assets/video1.mp4', scale: '1 1 1', position: '0 0 0', width: 1, height: 0.5625 });
+  addNewCard({ type: 'model', src: 'assets/model1.glb', scale: '0.3 0.3 0.3', position: '0 0 0', rotationMode: 'both', autoSpeed: 1 });
+</script>
+</body>
+</html>
