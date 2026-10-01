@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-01T22:02:39.748Z",
+  "targets": [
+    {
+      "index": 0,
+      "type": "video",
+      "src": "assets/video1.mp4",
+      "position": "0 0 0",
+      "scale": "1 1 1",
+      "width": 1,
+      "height": 0.5625
+    },
+    {
+      "index": 1,
+      "type": "model",
+      "src": "assets/model1.glb",
+      "position": "0 0 0",
+      "scale": "0.3 0.3 0.3",
+      "rotationMode": "both",
+      "autoSpeed": 1
+    }
+  ]
+}
